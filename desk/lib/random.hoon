@@ -15,11 +15,10 @@
 ::  Source
 ++  shuffle
   |*  [a=(list) eny=@uvJ]
-  ^-  (list _?>(?=(^ a) i.a))
   =/  n  (lent a)
   =/  i  0
   =/  rng  ~(. og eny)
-  |-
+  |-  ^-  (list _?>(?=(^ a) i.a))
   ?:  =(n i)  a
   =^  r  rng  (rads:rng n)
   =/  i1  (snag i a)
@@ -40,7 +39,7 @@
   |*  [a=(list) n=@ eny=@uvJ]
   ^-  (list _?>(?=(^ a) i.a))
   =.  n  (min (lent a) n)
-  =/  b  (shuffle a)
+  =/  b  (shuffle a eny)
   (scag n b)
 ::    +draw: (list T) -> T
 ::
@@ -86,7 +85,7 @@
   |-
   ?:  =(n i)  b
   =^  r  rng  (rads:rng (lent a))
-  =/  bb  (draw a (mix (end [3 4] eny) (mug r)))
+  =/  bb  (snag r a)
   $(i +(i), b [bb b])
 ::
 ::  Distributions
@@ -104,6 +103,41 @@
   ++  mt19937
     |=  seed=@rs
     :: TODO look at the +og implementation
+
+:: Algorithm mt19937 (Mersenne Twister):
+
+:: Initialization:
+:: - Define parameters:
+::   - w: word size (32 bits in mt19937)
+::   - n: degree of recurrence
+::   - m: middle word, an offset used in the recurrence relation
+::   - r: separation point of one word, used to scramble bits
+::   - a, b, c: coefficients of the recurrence
+::   - s, t: tempering bitmasks
+::   - u, d, l: tempering bit shifts
+::   - f: constant for tempering
+::   - lower_mask, upper_mask: bitmasks to extract the lowest and upper bits
+
+:: - Initialize the state vector mt[0..n-1] with a seed value.
+:: - Set index m to n + 1.
+
+:: Generation of pseudorandom numbers:
+:: - If index m is greater than or equal to n, update the state vector:
+::   - For i from 0 to n-1:
+::     - y = (mt[i] & upper_mask) | (mt[(i+1) % n] & lower_mask)
+::     - mt[i] = mt[(i + m) % n] ^ (y >> 1) ^ (y & 0x1U) << (w - 1)
+::   - Set m to 0.
+
+:: - Extract a tempered value based on the state vector:
+::   - y = mt[m]
+::   - y = y ^ (y >> u)
+::   - y = y ^ ((y << s) & b)
+::   - y = y ^ ((y << t) & c)
+::   - y = y ^ (y >> l)
+
+:: - Increment m.
+
+:: - Return the tempered value y.
 
   ::    +uniform: (num) -> num
   ::
